@@ -1,28 +1,16 @@
-function overview_header() {
-  // Get the spreadsheet and the specific sheet named "Evaluation"
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Evaluation");
+const CONSTANT = {
+  EVALUATION_SHEET : SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Evaluation"),
+  PARTICIPANTS_SHEET : SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Participants"),
+  EVENTS_SHEET : SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Events")
+};
   
-  // Check if the sheet exists
-  if (!sheet) {
-    Logger.log("Log 0003");
-    Logger.log("Sheet 'Evaluation' not found.");
-    return;  // Exit if the sheet doesn't exist
-  }
-  
-  var cell = sheet.getRange("A1");
+function createHeader() {
+  CONSTANT.EVALUATION_SHEET.getRange("A1:D1").merge()
+  .setValue("The overview below is solely based on the contents of sheet \"Events\" and \"Participants\".")
+  .setBackground("#B7B7B7")
+  .setWrap(true);
 
-  // Check if A1 is empty
-
-    // Merge cells A1, B1, C1, D1
-    sheet.getRange("A1:D1").merge();
-
-    // Insert the text "hi"
-    cell.setValue("The overview below is solely based on the contents of sheet \"Events\" and \"Participants\".");
-    cell.setBackground("#B7B7B7");  // Grey color in hex
-
-    // Automatically resize the row height to fit the content
-    sheet.autoResizeRows(1, 1);
-  
+  CONSTANT.EVALUATION_SHEET.autoResizeRows(1, 1);
 }
 
 function getMatrix(){
@@ -43,11 +31,6 @@ function getMatrix(){
     })
     return body;
     });
-   
-  
-  // Log the array to the console (for debugging purposes)
-  Logger.log("Log 0007")
-  Logger.log(array);
   return array;
 }
 
@@ -75,10 +58,6 @@ function run(matrix, payer, amount, people){
   app = Math.round(app * 100)/100;
   Logger.log("Calculation for app is " + app);
 
-  let app2 = amount/people.length; 
-  app2 = Math.round(app * 100)/100;
-  Logger.log("Calculation for app2 is " + app2);
-
   const others = people.filter(other => other !== payer);
 
   return matrix.map( obj => {
@@ -101,7 +80,7 @@ function startCalculation() {
   var eventsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Events");
   var monitoredColumns = [2, 3, 4];
 
-  overview_header();
+  createHeader();
   let matrix = getMatrix();
   const events = getEvents();
   
