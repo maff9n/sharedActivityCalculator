@@ -1,13 +1,3 @@
-const COLORS = {
-  red: "#f5c4c4",
-  orange: "#fddabc",
-  yellow: "#fff4cc",
-  green: "#cde5d2",
-  blue: "#b4d5e5",
-  indigo: "#d2c4e4",
-};
-// Todo: use COLORS to make participants in the evaluation overview more visually distinguishable
-
 // the sheet "Participants" and the sheet "Events" are meant to capture user input by hand
 // the sheet "Evaluation" gets its content solely from calculaten based on meantioned user input
 const evaluationSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Evaluation");
@@ -123,6 +113,22 @@ function writeDataToEvaluationSheet(matrix){
   evaluationSheet.getRange(2, 1, output.length, output[0].length).setValues(output);
 }
 
+// 
+function addColorToEvaluation(){
+  const colors = [ "#f5c4c4", "#fddabc", "#fff4cc", "#cde5d2", "#b4d5e5", "#d2c4e4"];
+  let range = evaluationSheet.getDataRange().getValues().slice(1);
+  let colorPicker = 0;
+
+  if(range.length > 0){
+    range.forEach((row, index) => {
+      evaluationSheet.getRange(index+2, 1, 1, 4).setBackground(colors[colorPicker]);
+      if (range[index+1] != undefined && row[0] != range[index+1][0]){
+        colorPicker = (colorPicker + 1) % colors.length;
+      }
+    });
+  }
+}
+
 // main
 function calcEvaluation(){
   // collect user input from the sheet "Events" and the sheet "Participants"
@@ -146,6 +152,25 @@ function calcEvaluation(){
   writeDataToEvaluationSheet(matrix);
 }
 
+// Purge all old contents from the "Evaluation" sheet after altering the "Events" sheet
+function cleanUp(){
+  // after using clear() one needs to reset the header of the "Evaluation" sheet
+  evaluationSheet.clear();
+  
+  const text = 'The evaluation below is based only on the data in the "Events" and "Participants" sheets.\n\n' +
+             'Some actions in Google Sheets, like using "Delete row" to remove an event from the Events sheet, ' +
+             'may not trigger the update of the evaluation. To prevent this behaviour, manually update the last value ' +
+             'you want to see included. After that, everything will work as expected.';
+  
+  evaluationSheet.getRange("A1:D1")
+  .merge()
+  .setBackground('#bdbdbd')
+  .setValue(text)
+  .setWrap(true);
+  
+  evaluationSheet.autoResizeRows(1, 1); 
+}
+
 function onEdit(e) { 
   const triggerSheet = e.source.getActiveSheet();
   const triggerRange = e.range;
@@ -153,9 +178,11 @@ function onEdit(e) {
   const isTargetSheet = triggerSheet.getName() === eventsSheet.getName();
   const isTargetColumn = triggerRange.getColumn() >= 2 && triggerRange.getColumn() <= 4;
 
-  // Check if an edit happened in sheet 'Events' and the edit occurred in columns B, C, or D
-  // If so calculate a complete evaluation
+  // Check if an edit happened in sheet "Events" and the edit occurred in columns B, C, or D
+  // If so perform a complete evaluation
   if (isTargetSheet && isTargetColumn) {
-    calcEvaluation(); 
+    cleanUp();
+    calcEvaluation();
+    addColorToEvaluation(); 
   }  
 }
